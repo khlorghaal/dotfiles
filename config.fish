@@ -1,21 +1,3 @@
-if status is-login
-    if test -z "$DISPLAY"
- 	if test "$XDG_VTNR" = 1
-		startx /usr/bin/startxfce4
-		xsetwacom set $(xsetwacom --list devices | awk '/pad/{print $NF}' | cut -d: -f2) MapToOutput 2304x1440+0+0
-	end
-	if test "$XDG_VTNR" = 2
-		startx /usr/bin/i3
-		/.config/i3_xrandr.sh
-	end
-end
-end
-
-#capital space
-xmodmap -e "keycode 65 = space underscore space underscore"
-
-fish_add_path -a /opt/cuda/bin /opt/cuda/nsight_systems/bin
-
 set -x GPG_TTY (tty)
 set -e SSH_AGENT_PID
 set -x SSH_AUTH_SOCK (gpgconf --list-dirs agent-ssh-socket)
@@ -24,11 +6,7 @@ gpgconf --launch gpg-agent
 alias vim="nvim"
 alias vimrc="nvim ~/.vimrc"
 
-alias subl="/opt/sublime_text/sublime_text"
 set -xg EDITOR nvim
-
-
-set -xg DESK ~/Desktop
 
 set -xg configfish ~/.config/fish/config.fish
 function confish
@@ -50,22 +28,14 @@ alias cdd="cd .."
 alias cddd="cd ../.."
 
 alias vim="nvim"
-alias sus="systemctl suspend"
-alias edit="subl -n "
 alias py="python"
 alias cls="clear"
 alias csl=cls
-alias sysu="systemctl --user"
 alias m="make"
 alias mc="make &| clip"
 alias ml="make &| less"
 alias me="make &| grep 'error' | less"
-alias ble="blender --python-use-system-env"
-alias windo="sudo efibootmgr --bootnext 0001 && reboot"
-alias em="emacs -nw"
-alias shud="shutdown now"
 alias servehere="py -m http.server"
-alias renet="sudo systemctl restart NetworkManager"
 alias chx="chmod +x"
 alias kill="killall -s 9"
 alias venv="source venv/bin/activate.fish"
@@ -79,7 +49,7 @@ function rant
 end
 
 function clip
-	xclip -selection clipboard
+	termux-clipboard-set
 end
 
 function search
@@ -100,7 +70,7 @@ end
 
 #dev envs
 function dev
-	cd ~/p/$argv[1] & subl .
+		cd ~/p/$argv[1] & $EDITOR .
 	tmux kill-session -t ide
 	tmux new-session -d -s ide
 	tmux select-layout -t ide tiled
@@ -134,17 +104,20 @@ end
 function dl
 	curl --remote-name $argv
 end
-function pacdl
-	sudo pacman -S $argv
+function pdl
+	pkg install $argv
 end
 
 function syu
-	sudo pacman -Sy archlinux-keyring && sudo pacman -Su
+	pkg upgrade
 end
 
 function dn
 	$argv & disown
-end 
+end
+function mkcd
+	mkdir $argv && cd $argv[1]
+end
 
 #ffmpeg
 function ffspeed
@@ -161,11 +134,5 @@ function ffcat
 end
 function ffclip
 	ffmpeg -i $argv[1] -ss $argv[2] -t $argv[3] $argv[4]
-end
-
-function udisc
-	sudo mv /home/khlor/Downloads/discord* -t /opt/discord
-	sudo tar -zxvf /opt/discord/discord-*.tar.gz -C /opt/discord
-	sudo rm /opt/discord/discord-*.tar.gz
 end
 
