@@ -1,3 +1,20 @@
+set -x SHARE "~/storage/media-0"
+
+function shm
+    cp $argv[1] -t $SHARE
+end
+
+set -xa LD_LIBRARY_PATH $PREFIX/lib #idfk why not set
+set -xa LIBRARY_PATH $PREFIX/lib
+
+#set -x ASAN_OPTIONS "symbolize=1:print_legend=0"
+#set -x ASAN_SYMBOLIZER_PATH "$PREFIX/usr/bin/llvm-symbolizer"
+
+set -x JAVA_HOME $PREFIX/opt/java
+fish_add_path $JAVA_HOME/bin
+
+fish_add_path ~/.nimble/bin
+
 set -x GPG_TTY (tty)
 set -e SSH_AGENT_PID
 set -x SSH_AUTH_SOCK (gpgconf --list-dirs agent-ssh-socket)
@@ -6,20 +23,19 @@ gpgconf --launch gpg-agent
 alias vim="nvim"
 alias vimrc="nvim ~/.vimrc"
 
-set -xg EDITOR nvim
+set -xg EDITOR hx
 
 set -xg configfish ~/.config/fish/config.fish
 function confish
-	$EDITOR $configfish
-	source $configfish
+    $EDITOR $configfish
+    source $configfish
 end
-
 
 set -g fish_prompt_pwd_dir_length 3
 set fish_greeting ''
 function fish_prompt
-	set_color green
-	echo \@(prompt_pwd)\>(set_color normal)
+    set_color green
+    echo \@(prompt_pwd)\>(set_color normal)
 end
 
 alias less="less -r"
@@ -42,21 +58,24 @@ alias venv="source venv/bin/activate.fish"
 
 #notes
 function todo
-	echo $argv >> ~/docs/todo.txt
+    echo $argv >>~/docs/todo.txt
 end
 function rant
-	echo $argv >> ~/docs/rants.txt
+    echo $argv >>~/docs/rants.txt
 end
 
 function clip
-	termux-clipboard-set
+    termux-clipboard-set
+end
+function calip
+    cat $argv[1] | clip
 end
 
 function search
-	tree -f | grep -i "$argv"
+    tree -f | grep -i "$argv"
 end
 function replace
-	find . -type f -exec sed -i "s/$argv[1]/$argv[2]/g" {} +
+    find . -type f -exec sed -i "s/$argv[1]/$argv[2]/g" {} +
 end
 
 #directories
@@ -64,21 +83,20 @@ alias sl="cd ~/p/suckless"
 alias p3="cd ~/p/3"
 
 function tail
-	/bin/tail -F $argv[1] 2>&1 | sed -u 's/^tail: .*: file truncated/\x1b[2J/'
+    /bin/tail -F $argv[1] 2>&1 | sed -u 's/^tail: .*: file truncated/\x1b[2J/'
 end
-
 
 #dev envs
 function dev
-		cd ~/p/$argv[1] & $EDITOR .
-	tmux kill-session -t ide
-	tmux new-session -d -s ide
-	tmux select-layout -t ide tiled
-	tmux split-window -h
-	tmux split-window -v
-	tmux send-keys -t ide:0.1 "clear && tail ./stdout" Enter
-	tmux send-keys -t ide:0.2 "clear && tail ./stderr" Enter
-	tmux attach-session -t ide
+    cd ~/p/$argv[1] & $EDITOR .
+    tmux kill-session -t ide
+    tmux new-session -d -s ide
+    tmux select-layout -t ide tiled
+    tmux split-window -h
+    tmux split-window -v
+    tmux send-keys -t ide:0.1 "clear && tail ./stdout" Enter
+    tmux send-keys -t ide:0.2 "clear && tail ./stderr" Enter
+    tmux attach-session -t ide
 end
 
 #git
@@ -87,52 +105,59 @@ alias gadd="git add ."
 alias gam="git commit --amend"
 alias gdiff="git diff HEAD~1 --stat"
 function gommit
-	git add .
-	git commit -m "$argv"
+    git add .
+    git commit -m "$argv"
 end
 function clone
-	git clone $argv
+    git clone $argv
 end
 function cloneshallow
-	git clone $argv --depth 1 --recurse-submodules --shallow-submodules --single-branch
+    git clone $argv --depth 1 --recurse-submodules --shallow-submodules --single-branch
 end
 
 #downloading
 function mvd
-	mv $argv[1] -t $argv[2]
+    mv $argv[1] -t $argv[2]
 end
 function dl
-	curl --remote-name $argv
+    curl --remote-name $argv
 end
 function pdl
-	pkg install $argv
+    pkg install $argv
 end
 
 function syu
-	pkg upgrade
+    pkg upgrade
 end
 
 function dn
-	$argv & disown
+    $argv & disown
 end
 function mkcd
-	mkdir $argv && cd $argv[1]
+    mkdir $argv && cd $argv[1]
+end
+
+function patch
+    git am ~/share/$argv
 end
 
 #ffmpeg
 function ffspeed
-	ffmpeg -i $argv[1] -filter:a "rubberband=tempo=$argv[2]" -filter:v "setpts=$argv[3]*PTS" $argv[4]
+    ffmpeg -i $argv[1] -filter:a "rubberband=tempo=$argv[2]" -filter:v "setpts=$argv[3]*PTS" $argv[4]
 end
 function ffpngi
-	ffmpeg -framerate $argv[1] -i %4d.png -b:v 8M -c:v libx264 -crf 6 -pix_fmt yuv420p -preset slow -c:a aac -movflags +faststart $argv[2]
+    ffmpeg -framerate $argv[1] -i %4d.png -b:v 8M -c:v libx264 -crf 6 -pix_fmt yuv420p -preset slow -c:a aac -movflags +faststart $argv[2]
 end
 function ffloop
-	ffmpeg -stream_loop $argv[1] -i $argv[2] -c copy $argv[3]
+    ffmpeg -stream_loop $argv[1] -i $argv[2] -c copy $argv[3]
 end
 function ffcat
-	ffmpeg -f concat -safe 0 -i <(echo "file '$argv[1]'" echo "file '$argv[2]'";) -c copy $argv[3]
+    ffmpeg -f concat -safe 0 -i <(echo "file '$argv[1]'" echo "file '$argv[2]'";) -c copy $argv[3]
 end
 function ffclip
-	ffmpeg -i $argv[1] -ss $argv[2] -t $argv[3] $argv[4]
+    ffmpeg -i $argv[1] -ss $argv[2] -t $argv[3] $argv[4]
 end
 
+if status is-login
+    sleep .25 & tmux
+end
